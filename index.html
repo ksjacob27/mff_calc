@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MFF Calculator (BAM / CCF)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg, #8AAAE5 0%, #D3C5E5 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .calculator-box {
+      background-color: rgba(255, 255, 255, 0.9);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,0.1), 0 6px 20px rgba(0,0,0,0.15);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      width: 380px;
+      backdrop-filter: blur(8px);
+    }
+    h1 {  
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #2C3E50;
+      font-size: 1.8rem;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    label {
+      display: block;
+      margin-top: 0.75rem;
+      font-weight: bold;
+      color: #34495E;
+      letter-spacing: 0.5px;
+    }
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.25rem;
+      box-sizing: border-box;
+      border: 1px solid #BDC3C7;
+      border-radius: 6px;
+      background-color: #FFFFFF;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input[type="number"]:focus,
+    select:focus {
+      border-color: #4E54C8;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.15), 0 0 0 3px rgba(78,84,200,0.2);
+      outline: none;
+    }
+    button {
+      margin: 1.5rem auto 0 auto;
+      display: block;
+      padding: 0.75rem 2rem;
+      background: linear-gradient(90deg, #a7b2e4 0%, #b29cc7 100%);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #764BA2 0%, #667EEA 100%);
+    }
+    .result {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background-color: #F5F5FF;
+      border: 1px solid #DDDDFF;
+      border-radius: 6px;
+      color: #2C3E50;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calculator-box">
+    <h1>MFF Calculator</h1>
+
+    <!-- Resource Type Selection -->
+    <label for="resourceType">Select Resource Type:</label>
+    <select id="resourceType">
+      <option value="BAM">BAM</option>
+      <option value="CCF">CCF</option>
+    </select>
+
+    <!-- Rank Input -->
+    <label for="rankInput">Enter Rank:</label>
+    <input type="number" id="rankInput" min="1" step="1" placeholder="e.g., 3" />
+
+    <!-- Base Amount Input -->
+    <label for="amountInput">Enter Amount:</label>
+    <input type="number" id="amountInput" min="1" step="1" placeholder="e.g., 100" />
+
+    <!-- Calculate Button -->
+    <button id="calculateBtn">Calculate</button>
+
+    <!-- Results Display -->
+    <div class="result" id="resultArea" style="display: none;">
+      <p id="totalUnits"></p>
+      <p id="totalCost"></p>
+    </div>
+  </div>
+
+  <script>
+    async function calculate() {
+      const resourceType = document.getElementById('resourceType').value;
+      const rank = parseInt(document.getElementById('rankInput').value, 10);
+      const baseAmount = parseInt(document.getElementById('amountInput').value, 10);
+
+      if (isNaN(rank) || rank < 1) {
+        alert('Please enter a valid Rank (≥1).');
+        return;
+      }
+      if (isNaN(baseAmount) || baseAmount < 1) {
+        alert('Please enter a valid Amount (≥1).');
+        return;
+      }
+
+      const payload = { resourceType, rank, baseAmount };
+
+      try {
+        const response = await fetch('/calculate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errorJson = await response.json();
+          alert(`Server error: ${errorJson.error || response.statusText}`);
+          return;
+        }
+
+        const data = await response.json();
+        document.getElementById('totalUnits').textContent =
+          `Total ${resourceType} Units: ${data.totalUnits.toLocaleString()}`;
+        document.getElementById('totalCost').textContent =
+          `Total Cost: ${data.totalCost.toLocaleString()} gold`;
+        document.getElementById('resultArea').style.display = 'block';
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', calculate);
+  </script>
+</body>
+</html>
